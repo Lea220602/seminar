@@ -1,2 +1,7 @@
 _etc/
 0-4_4_True/
+*.pem
+*.pub
+id_rsa
+id_rsa.pub
+.ssh/
