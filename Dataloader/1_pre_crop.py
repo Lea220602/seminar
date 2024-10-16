@@ -3,7 +3,7 @@ import numpy as np
 import random
 import os
 import matplotlib.pyplot as plt
-
+# 랜덤하게 shift해서 32*32
 
 def random_crop_around_label(image, right_x, right_y, left_x, left_y, crop_size=32, max_offset=8):
     # 이미지 크기 확인
@@ -52,7 +52,7 @@ png_dir = 'eyes_png'
 txt_dir = 'total_txt'
 blind_dir = 'blind_png'
 # 새로운 폴더 경로 설정
-output_base_dir = '/Users/hong-eun-yeong/Codes/output'
+output_base_dir = '/Users/hong-eun-yeong/Codes/1_crop_output'
 right_output_dir = os.path.join(output_base_dir, 'Right')
 left_output_dir = os.path.join(output_base_dir, 'Left')
 right_label_dir = os.path.join(output_base_dir, 'right_label')

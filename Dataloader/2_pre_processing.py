@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-
+# 너무 어두운 이미지 제외
 def evaluate_image_quality(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     mean_brightness = np.mean(gray)
@@ -52,14 +52,14 @@ def process_images(input_dir, label_dir, output_dir, output_label_dir, brightnes
     print(f"총 {total_count}개 중 {processed_count}개의 이미지가 처리되었습니다.")
 
 # 디렉토리 설정
-base_dir = '/Users/hong-eun-yeong/Codes/output'
+base_dir = '/Users/hong-eun-yeong/Codes/1_crop_output'
 right_input_dir = os.path.join(base_dir, 'Right')
 left_input_dir = os.path.join(base_dir, 'Left')
 right_label_dir = os.path.join(base_dir, 'right_label')
 left_label_dir = os.path.join(base_dir, 'left_label')
 
 # 새로운 출력 디렉토리 설정
-output_base_dir = '/Users/hong-eun-yeong/Codes/filtered_output'
+output_base_dir = '/Users/hong-eun-yeong/Codes/2_filtered_output'
 right_output_dir = os.path.join(output_base_dir, 'Right')
 left_output_dir = os.path.join(output_base_dir, 'Left')
 right_output_label_dir = os.path.join(output_base_dir, 'right_label')
