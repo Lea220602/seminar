@@ -1,71 +1,73 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision import transforms
 import matplotlib.pyplot as plt
-import cv2
 import numpy as np
+import cv2
 
-from Dataloader.dataloader import CustomImageDataset, transform, enhance_image
+# 이전에 정의한 CustomImageDataset과 모델을 import
+from Dataloader.dataloader import CustomImageDataset
 from Model.nn_models import ImprovedPupilLandmarkNet_64
 
-# 설정
-device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
-model_path = './landmark_detection_model.pth'
+# 테스트 데이터 경로 설정
+test_img_dir = '/Users/hong-eun-yeong/Codes/test_dataset'
 
-test_img_dir = '/path/to/test/images/'  # 테스트 이미지 디렉토리 경로를 지정하세요
+# 하이퍼파라미터 설정
+batch_size = 1  # 시각화를 위해 배치 크기를 1로 설정
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+# DataLoader 설정
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485], std=[0.229])
+])
+
+test_dataset = CustomImageDataset(img_dir=test_img_dir, transform=transform, is_train=False)
+test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # 모델 로드
 model = ImprovedPupilLandmarkNet_64().to(device)
-model.load_state_dict(torch.load(model_path))
+model.load_state_dict(torch.load('best_landmark_detection_model.pth'))
 model.eval()
 
-# 테스트 데이터셋 및 DataLoader 설정
-test_dataset = CustomImageDataset(img_dir=test_img_dir, transform=transform)
-test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-# 테스트 함수
-def test_model(model, test_loader, device):
+# 테스트 및 시각화 함수
+def test_and_visualize(model, dataloader, device, num_samples=5):
     model.eval()
-    total_loss = 0
-    criterion = nn.MSELoss()
-
+    
     with torch.no_grad():
-        for images, labels in test_loader:
+        for i, (images, labels) in enumerate(dataloader):
+            if i >= num_samples:
+                break
+            
             images = images.to(device)
             labels = labels.to(device)
-
+            
             outputs = model(images)
-            loss = criterion(outputs, labels[:, :2])  # x, y 좌표에 대해서만 loss 계산
-            total_loss += loss.item()
+            
+            # 이미지, 레이블, 예측값을 CPU로 이동하고 numpy 배열로 변환
+            image = images[0].cpu().numpy().transpose(1, 2, 0)
+            label = labels[0].cpu().numpy()
+            pred = outputs[0].cpu().numpy()
+            
+            # 이미지 정규화 해제
+            image = (image * 0.229 + 0.485) * 255
+            image = image.astype(np.uint8)
+            
+            # 그레이스케일 이미지를 RGB로 변환
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+            
+            # 이미지에 실제 랜드마크와 예측된 랜드마크 표시
+            h, w = image.shape[:2]
+            cv2.circle(image, (int(label[0]*w), int(label[1]*h)), 1, (0, 255, 0), -1)  # 실제 랜드마크 (녹색)
+            cv2.circle(image, (int(pred[0]*w), int(pred[1]*h)), 1, (255, 0, 0), -1)   # 예측된 랜드마크 (빨간색)
+            
+            # 결과 시각화
+            plt.figure(figsize=(8, 8))
+            plt.imshow(image)
+            plt.title(f'Sample {i+1} - Green: Ground Truth, Red: Prediction')
+            plt.axis('off')
+            plt.show()
 
-    avg_loss = total_loss / len(test_loader)
-    print(f"Average test loss: {avg_loss:.4f}")
-
-# 단일 이미지에 대한 예측 및 시각화 함수
-def predict_and_visualize(model, image_path, device):
-    # 이미지 로드 및 전처리
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    image = enhance_image(image)
-    image_tensor = transform(image).unsqueeze(0).to(device)
-
-    # 예측
-    model.eval()
-    with torch.no_grad():
-        output = model(image_tensor)
-
-    # 예측 결과 시각화
-    pred_x, pred_y = output[0].cpu().numpy()
-    
-    plt.figure(figsize=(10, 10))
-    plt.imshow(image, cmap='gray')
-    plt.plot(pred_x, pred_y, 'ro', markersize=5)
-    plt.title(f"Predicted landmark: ({pred_x:.2f}, {pred_y:.2f})")
-    plt.axis('off')
-    plt.show()
-
-# 모델 테스트
-test_model(model, test_loader, device)
-
-# 단일 이미지에 대한 예측 및 시각화
-sample_image_path = '/path/to/sample/image.jpg'  # 샘플 이미지 경로를 지정하세요
-predict_and_visualize(model, sample_image_path, device)
+# 모델 테스트 및 결과 시각화
+test_and_visualize(model, test_dataloader, device)

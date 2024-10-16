@@ -17,13 +17,9 @@ class ImprovedPupilLandmarkNet_64(nn.Module):
         self.bn4 = nn.BatchNorm2d(64)
         
         # 완전 연결 레이어
-        self.fc1 = nn.Linear(4096, 1024)
-        self.bn5 = nn.BatchNorm1d(1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.bn6 = nn.BatchNorm1d(256)
-        self.fc3 = nn.Linear(256, 64)
-        self.bn7 = nn.BatchNorm1d(64)
-        self.fc4 = nn.Linear(64, 2)
+        self.fc1 = nn.Linear(1024, 64)  # 1024에서 64로 줄임
+        self.bn5 = nn.BatchNorm1d(64)
+        self.fc2 = nn.Linear(64, 2)  # 64에서 2(x, y 좌표)로 출력
         
         # Dropout
         self.dropout = nn.Dropout(p=0.3)  # 약간 높은 dropout 비율
@@ -42,13 +38,11 @@ class ImprovedPupilLandmarkNet_64(nn.Module):
         x4 = x4 + x3
         
         # Flatten
-        x = x4.view(-1, 64 * 8 * 8)
+        x = x4.view(x.size(0), -1)  # Flatten the output
         
         # 완전 연결 레이어
-        x = self.dropout(F.relu(self.bn5(self.fc1(x))))
-        x = self.dropout(F.relu(self.bn6(self.fc2(x))))
-        x = self.dropout(F.relu(self.bn7(self.fc3(x))))
-        x = self.fc4(x)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
         return x
 
 #모델 테스트

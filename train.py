@@ -20,32 +20,26 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485], std=[0.229])
 ])
 
-img_dir = '/Users/hong-eun-yeong/Codes/train/Detroit_cam0_apillar_gray_006_M_asian_ng_240425_0616_sunny/total/'
+img_dir = '/Users/hong-eun-yeong/Codes/combined_dataset'
 dataset = CustomImageDataset(img_dir=img_dir, transform=transform)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # 모델 초기화
 model = ImprovedPupilLandmarkNet_64().to(device)
 
-# 사용자 정의 Loss 함수
-class CustomMSELoss(nn.Module):
-    def __init__(self):
-        super(CustomMSELoss, self).__init__()
-        self.mse = nn.MSELoss()
-
-    def forward(self, outputs, labels):
-        return self.mse(outputs, labels[:, :2])  # x, y 좌표에 대해서만 MSE 계산
-
-
 # Loss 함수 정의
-criterion = CustomMSELoss()  # Mean Squared Error loss for regression
+criterion = nn.MSELoss()  # 일반 MSE loss 사용
 
 # Optimizer 설정
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+# 최고 성능 추적을 위한 변수 초기화
+best_loss = float('inf')
+
 # 학습 루프
 for epoch in range(num_epochs):
     model.train()
+    epoch_loss = 0.0
     for batch_idx, (images, labels) in enumerate(dataloader):
         images = images.to(device)
         labels = labels.to(device)
@@ -61,10 +55,22 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
         
+        epoch_loss += loss.item()
+        
         if batch_idx % 10 == 0:
             print(f'Epoch [{epoch+1}/{num_epochs}], Step [{batch_idx+1}/{len(dataloader)}], Loss: {loss.item():.4f}')
+    
+    # 에포크 평균 손실 계산
+    avg_loss = epoch_loss / len(dataloader)
+    print(f'Epoch [{epoch+1}/{num_epochs}], Average Loss: {avg_loss:.4f}')
+    
+    # 최고 성능 모델 저장
+    if avg_loss < best_loss:
+        best_loss = avg_loss
+        torch.save(model.state_dict(), 'best_landmark_detection_model.pth')
+        print(f'New best model saved with loss: {best_loss:.4f}')
 
 print('Training finished!')
 
-# 모델 저장
-torch.save(model.state_dict(), 'landmark_detection_model.pth')
+# 최종 모델 저장
+torch.save(model.state_dict(), 'final_landmark_detection_model.pth')
