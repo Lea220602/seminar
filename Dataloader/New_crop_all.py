@@ -32,7 +32,7 @@ def random_crop_around_label(image, right_x, right_y, left_x, left_y, crop_size=
     right_cropped_image = image[right_top:right_top+crop_size, right_left:right_left+crop_size]
     left_cropped_image = image[left_top:left_top+crop_size, left_left:left_left+crop_size]
     
-    # 새로운 레이블 좌표 계산
+    # 새로운 레이블 좌표 계산 (정규화 전)
     new_right_x = right_x - right_left
     new_right_y = right_y - right_top
     new_left_x = left_x - left_left
@@ -43,13 +43,27 @@ def random_crop_around_label(image, right_x, right_y, left_x, left_y, crop_size=
     normalized_right_y = new_right_y / crop_size
     normalized_left_x = new_left_x / crop_size
     normalized_left_y = new_left_y / crop_size
-    return right_cropped_image, left_cropped_image, (normalized_right_x, normalized_right_y, normalized_left_x, normalized_left_y)
+    
+    return right_cropped_image, left_cropped_image, (normalized_right_x, normalized_right_y, normalized_left_x, normalized_left_y), (new_right_x, new_right_y, new_left_x, new_left_y), (right_left, right_top, left_left, left_top)
 
 # 디렉토리 경로 설정
 base_dir = '/Users/hong-eun-yeong/Codes/train'
 png_dir = 'eyes_png'
 txt_dir = 'total_txt'
 blind_dir = 'blind_png'
+# 새로운 폴더 경로 설정
+output_base_dir = '/Users/hong-eun-yeong/Codes/output'
+right_output_dir = os.path.join(output_base_dir, 'Right')
+left_output_dir = os.path.join(output_base_dir, 'Left')
+right_label_dir = os.path.join(output_base_dir, 'right_label')
+left_label_dir = os.path.join(output_base_dir, 'left_label')
+original_with_points_dir = os.path.join(output_base_dir, 'Original_with_points')
+
+# 새로운 폴더 생성
+for dir_path in [right_output_dir, left_output_dir, right_label_dir, left_label_dir]:
+    os.makedirs(dir_path, exist_ok=True)
+
+os.makedirs(original_with_points_dir, exist_ok=True)
 
 all_images = []
 all_labels = []
@@ -74,56 +88,66 @@ if os.path.exists(base_dir):
             #left_eye_path = os.path.join(png_path, f"{base_name}_L.png")
             #right_eye_path = os.path.join(png_path, f"{base_name}_R.png")
             
-            # if os.path.exists(blind_img_path) and os.path.exists(left_eye_path) and os.path.exists(right_eye_path):
-            #     all_images.append((blind_img_path))
+            if os.path.exists(blind_img_path):
+                all_images.append((blind_img_path))
 
 # 예시로 첫 번째 이미지와 레이블 처리
-# if all_images and all_labels:
-#     blind_img_path= all_images[1000]
-#     txt_path = all_labels[1000]
+for i, blind_img_path in enumerate(all_images):
     
-#     original_image = cv2.imread(blind_img_path)
+    txt_path = all_labels[i]
     
-#     with open(txt_path, 'r') as file:
-#         content = file.read().strip()
-#         values = content.split()
-#         if len(values) >= 7:
-#             # 4, 5, 6, 7번째 값 추출 (인덱스는 3부터 시작)
-#             extracted = [float(values[i]) for i in range(4, 8)]
-            
-#             # 값 변환
-#             extracted[0] *= 640  # 4번째 값에 640 곱하기
-#             extracted[1] *= 480  # 5번째 값에 480 곱하기
-#             extracted[2] *= 640  # 6번째 값에 640 곱하기
-#             extracted[3] *= 480  # 7번째 값에 480 곱하기
-            
-                
-#     original_right_x, original_right_y = extracted[0], extracted[1]  # 640x480 이미지의 중앙점
-#     original_left_x, original_left_y = extracted[2], extracted[3]  # 640x480 이미지의 중앙점
+    original_image = cv2.imread(blind_img_path)
+    
+    with open(txt_path, 'r') as file:
+        content = file.read().strip()
+        values = content.split()
+        if len(values) >= 7:
+            extracted = [float(values[i]) for i in range(4, 8)]
+            extracted = [extracted[0] * 640, extracted[1] * 480, extracted[2] * 640, extracted[3] * 480]
+    
+    original_right_x, original_right_y, original_left_x, original_left_y = extracted
+    
+    # 원본 이미지에 점 찍기
+    original_with_points = original_image.copy()
+    cv2.circle(original_with_points, (int(original_right_x), int(original_right_y)), 5, (0, 0, 255), -1)
+    cv2.circle(original_with_points, (int(original_left_x), int(original_left_y)), 5, (255, 0, 0), -1)
+    
+    # 원본 이미지에 점 찍은 것 저장
+    base_name = os.path.splitext(os.path.basename(blind_img_path))[0]
+    cv2.imwrite(os.path.join(original_with_points_dir, f"{base_name}_with_points.png"), original_with_points)
+    
+    right_cropped_image, left_cropped_image, new_normalized_label, new_label, crop_coords = random_crop_around_label(
+        original_image, original_right_x, original_right_y, original_left_x, original_left_y
+    )
+    
+    # new_normalized_label에 음수 값이 있는지 확인
+    if any(val < 0 for val in new_normalized_label):
+        #base_name = os.path.splitext(os.path.basename(blind_img_path))[0]
+        # print(f"에러: 파일 {base_name}에서 음수 정규화 레이블이 발견되었습니다.")
+        # print(f"원본 좌표: right_x={original_right_x}, right_y={original_right_y}, left_x={original_left_x}, left_y={original_left_y}")
+        # print(f"크롭 좌표: right_left={crop_coords[0]}, right_top={crop_coords[1]}, left_left={crop_coords[2]}, left_top={crop_coords[3]}")
+        # print(f"새 좌표 (정규화 전): right_x={new_label[0]}, right_y={new_label[1]}, left_x={new_label[2]}, left_y={new_label[3]}")
+        # print(f"정규화된 레이블 값: {new_normalized_label}")
+        
+        # 문제가 있는 이미지 저장
+        # cv2.imwrite(os.path.join(output_base_dir, f"error_{base_name}_original.png"), original_image)
+        # cv2.imwrite(os.path.join(output_base_dir, f"error_{base_name}_right_crop.png"), right_cropped_image)
+        # cv2.imwrite(os.path.join(output_base_dir, f"error_{base_name}_left_crop.png"), left_cropped_image)
+        
+        continue  # 이 이미지의 처리를 건너뛰고 다음 이미지로 넘어갑니다.
+    
+    # 크롭된 이미지 저장
+    cv2.imwrite(os.path.join(right_output_dir, f"{base_name}_R.png"), right_cropped_image)
+    cv2.imwrite(os.path.join(left_output_dir, f"{base_name}_L.png"), left_cropped_image)
+    
+    # 새로운 레이블 저장
+    with open(os.path.join(right_label_dir, f"{base_name}_R.txt"), 'w') as f:
+        f.write(f"{new_normalized_label[0]} {new_normalized_label[1]}")
+    with open(os.path.join(left_label_dir, f"{base_name}_L.txt"), 'w') as f:
+        f.write(f"{new_normalized_label[2]} {new_normalized_label[3]}")
+    
+    # 진행 상황 출력
+    if (i + 1) % 100 == 0:
+        print(f"Processed {i + 1} images")
 
-#     # 랜덤 crop 및 새 레이블 계산
-#     right_cropped_image, left_cropped_image, new_normalized_label = random_crop_around_label(original_image, original_right_x, original_right_y, original_left_x, original_left_y)
-  
-  
-#     plt.figure(figsize=(15, 5))
-#     plt.subplot(1, 3, 1)
-#     plt.imshow(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
-#     plt.title("원본 이미지")
-#     plt.plot(original_right_x, original_right_y, 'ro')
-#     plt.plot(original_left_x, original_left_y, 'bo')
-
-#     plt.subplot(1, 3, 2)
-#     plt.imshow(cv2.cvtColor(right_cropped_image, cv2.COLOR_BGR2RGB))
-#     plt.title("오른쪽 눈 Crop 이미지")
-#     plt.plot(new_normalized_label[0]*32, new_normalized_label[1]*32, 'ro')
-
-#     plt.subplot(1, 3, 3)
-#     plt.imshow(cv2.cvtColor(left_cropped_image, cv2.COLOR_BGR2RGB))
-#     plt.title("왼쪽 눈 Crop 이미지")
-#     plt.plot(new_normalized_label[2]*32, new_normalized_label[3]*32, 'bo')
-
-#     plt.show()
-
-#     print(f"새로운 정규화된 레이블 좌표: {new_normalized_label}")
-# else:
-#     print("처리할 이미지나 레이블이 없습니다.")
+print("Processing complete!")
