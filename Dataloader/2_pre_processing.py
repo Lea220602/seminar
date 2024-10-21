@@ -8,7 +8,7 @@ def evaluate_image_quality(image):
     std_dev = np.std(gray)
     return mean_brightness, std_dev
 
-def process_images(input_dir, label_dir, output_dir, output_label_dir, brightness_threshold=10, contrast_threshold=3):
+def process_images(input_dir, label_dir, output_dir, output_label_dir, brightness_threshold=5, contrast_threshold=3):
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(output_label_dir, exist_ok=True)
 

@@ -2,12 +2,12 @@ import cv2
 import torch
 import numpy as np
 from torchvision import transforms
-from Model.nn_models import ImprovedPupilLandmarkNet_64
+from Seminar.Model.nn_models import ImprovedPupilLandmarkNet_64
 
 # 모델 로드
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ImprovedPupilLandmarkNet_64().to(device)
-model.load_state_dict(torch.load('landmark_detection_model.pth'))
+model.load_state_dict(torch.load('best_landmark_detection_model.pth'))
 model.eval()
 
 # 전처리 변환
@@ -28,7 +28,7 @@ while True:
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     # 이미지 크기 조정 (모델 입력 크기에 맞게)
-    resized_frame = cv2.resize(gray_frame, (64, 64))
+    resized_frame = cv2.resize(gray_frame, (32, 32))
     
     # 전처리
     input_tensor = transform(resized_frame).unsqueeze(0).to(device)

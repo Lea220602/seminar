@@ -67,10 +67,20 @@ for epoch in range(num_epochs):
     # 최고 성능 모델 저장
     if avg_loss < best_loss:
         best_loss = avg_loss
-        torch.save(model.state_dict(), 'best_landmark_detection_model.pth')
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': best_loss,
+        }, 'best_landmark_detection_model.pt')
         print(f'New best model saved with loss: {best_loss:.4f}')
 
 print('Training finished!')
 
 # 최종 모델 저장
-torch.save(model.state_dict(), 'final_landmark_detection_model.pth')
+torch.save({
+    'epoch': num_epochs,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': avg_loss,
+}, 'final_landmark_detection_model.pt')

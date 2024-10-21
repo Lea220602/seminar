@@ -56,7 +56,7 @@ right_label_dir = os.path.join(base_dir, 'right_label')
 left_label_dir = os.path.join(base_dir, 'left_label')
 
 # 새로운 출력 디렉토리 설정
-output_base_dir = '/Users/hong-eun-yeong/Codes/0_augmented_output'
+output_base_dir = '/Users/hong-eun-yeong/Codes/4_augmented_output'
 right_output_dir = os.path.join(output_base_dir, 'Right')
 left_output_dir = os.path.join(output_base_dir, 'Left')
 right_output_label_dir = os.path.join(output_base_dir, 'right_label')

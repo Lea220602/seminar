@@ -3,7 +3,7 @@ import shutil
 
 # 원본 디렉토리 설정
 source_dirs = [
-    ('/Users/hong-eun-yeong/Codes/0_augmented_output', 'aug_'),
+    ('/Users/hong-eun-yeong/Codes/4_augmented_output', 'aug_'),
     ('/Users/hong-eun-yeong/Codes/1_crop_output', 'crop_')
 ]
 
