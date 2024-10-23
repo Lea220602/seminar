@@ -129,14 +129,14 @@ class CustomImageDataset(Dataset):
         plt.show()
 
 #Transformations 정의
-transform = transforms.Compose([
-    transforms.ToTensor(),  # Tensor로 변환 0-1
-])
+# transform = transforms.Compose([
+#     transforms.ToTensor(),  # Tensor로 변환 0-1
+# ])
 
 # Example usage
-img_dir = '/Users/hong-eun-yeong/Codes/combined_dataset'
-dataset = CustomImageDataset(img_dir=img_dir, transform=transform)
-print(f"Dataset size: {dataset.__len__()}")
+# img_dir = '/Users/hong-eun-yeong/Codes/combined_dataset'
+# dataset = CustomImageDataset(img_dir=img_dir, transform=transform)
+# print(f"Dataset size: {dataset.__len__()}")
 
 #시각화할 인덱스 지정
 #indices_to_visualize = [1, 2, 3]  # 여러 이미지를 시각화하도록 변경
