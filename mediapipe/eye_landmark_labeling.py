@@ -41,60 +41,62 @@ with mp_face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1, refine_landm
             results = face_mesh.process(image_rgb)
 
             if results.multi_face_landmarks:
-                for face_landmarks in results.multi_face_landmarks:
-                    # 왼쪽과 오른쪽 눈 끝 시각화
-                    left_eye_corner = [face_landmarks.landmark[i] for i in LEFT_EYE_CORNER]
-                    right_eye_corner = [face_landmarks.landmark[i] for i in RIGHT_EYE_CORNER]
+                # 레이블 저장을 위한 txt 파일 생성
+                label_txt_path = os.path.join(output_dir, f"labeled_{filename.split('.')[0]}.txt")
+                with open(label_txt_path, 'w') as f:
+                    coords = []  # 좌표를 저장할 리스트
+                    
+                    for face_landmarks in results.multi_face_landmarks:
+                        # 왼쪽과 오른쪽 눈 끝 정규화된 좌표 저장
+                        left_eye_corner = [face_landmarks.landmark[i] for i in LEFT_EYE_CORNER]
+                        right_eye_corner = [face_landmarks.landmark[i] for i in RIGHT_EYE_CORNER]
 
-                    # 왼쪽 눈 끝 그리기
-                    for idx, landmark in enumerate(left_eye_corner):
-                        x = int(landmark.x * width)
-                        y = int(landmark.y * height)
-                        cv2.circle(image, (x, y), 3, (0, 255, 0), -1)  # 녹색으로 눈 끝 표시
+                        for landmark in left_eye_corner:
+                            x = landmark.x
+                            y = landmark.y
+                            coords.append(f"{x:.6f} {y:.6f}")  # 좌표를 리스트에 추가
 
-                    # 오른쪽 눈 끝 그리기
-                    for idx, landmark in enumerate(right_eye_corner):
-                        x = int(landmark.x * width)
-                        y = int(landmark.y * height)
-                        cv2.circle(image, (x, y), 3, (0, 255, 0), -1)  # 녹색으로 눈 끝 표시
+                        for landmark in right_eye_corner:
+                            x = landmark.x
+                            y = landmark.y
+                            coords.append(f"{x:.6f} {y:.6f}")  # 좌표를 리스트에 추가
 
-                    # 왼쪽 눈 동공 시각화
-                    left_iris = [face_landmarks.landmark[i] for i in LEFT_IRIS]
-                    left_iris_center_x = sum([p.x for p in left_iris]) / len(left_iris)
-                    left_iris_center_y = sum([p.y for p in left_iris]) / len(left_iris)
-                    left_iris_center = (int(left_iris_center_x * width), int(left_iris_center_y * height))
+                        # 왼쪽 눈 동공 정규화된 좌표 저장
+                        left_iris = [face_landmarks.landmark[i] for i in LEFT_IRIS]
+                        left_iris_center_x = sum([p.x for p in left_iris]) / len(left_iris)
+                        left_iris_center_y = sum([p.y for p in left_iris]) / len(left_iris)
 
-                    # 동공 가장자리와 원 시각화
-                    for landmark in left_iris:
-                        x = int(landmark.x * width)
-                        y = int(landmark.y * height)
-                        cv2.circle(image, (x, y), 2, (0, 0, 255), -1)  # 빨간색으로 동공 경계점
+                        for landmark in left_iris:
+                            x = landmark.x
+                            y = landmark.y
+                            coords.append(f"{x:.6f} {y:.6f}")  # 좌표를 리스트에 추가
 
-                    # 동공 중심 시각화
-                    cv2.circle(image, left_iris_center, 3, (255, 0, 0), -1)  # 파란색으로 동공 중앙 표시
+                        # 동공 중심 좌표 추가
+                        coords.append(f"{left_iris_center_x:.6f} {left_iris_center_y:.6f}")
 
-                    # 오른쪽 눈 동공 시각화
-                    right_iris = [face_landmarks.landmark[i] for i in RIGHT_IRIS]
-                    right_iris_center_x = sum([p.x for p in right_iris]) / len(right_iris)
-                    right_iris_center_y = sum([p.y for p in right_iris]) / len(right_iris)
-                    right_iris_center = (int(right_iris_center_x * width), int(right_iris_center_y * height))
+                        # 오른쪽 눈 동공 정규화된 좌표 저장
+                        right_iris = [face_landmarks.landmark[i] for i in RIGHT_IRIS]
+                        right_iris_center_x = sum([p.x for p in right_iris]) / len(right_iris)
+                        right_iris_center_y = sum([p.y for p in right_iris]) / len(right_iris)
 
-                    # 동공 가장자리와 원 시각화
-                    for landmark in right_iris:
-                        x = int(landmark.x * width)
-                        y = int(landmark.y * height)
-                        cv2.circle(image, (x, y), 2, (0, 0, 255), -1)  # 빨간색으로 동공 경계점
+                        for landmark in right_iris:
+                            x = landmark.x
+                            y = landmark.y
+                            coords.append(f"{x:.6f} {y:.6f}")  # 좌표를 리스트에 추가
 
-                    # 동공 중심 시각화
-                    cv2.circle(image, right_iris_center, 3, (255, 0, 0), -1)  # 파란색으로 동공 중앙 표시
+                        # 동공 중심 좌표 추가
+                        coords.append(f"{right_iris_center_x:.6f} {right_iris_center_y:.6f}")
+
+                    # 좌표를 한 줄로 저장
+                    f.write(" ".join(coords) + "\n")
 
             # 결과 이미지 저장
             output_path = os.path.join(output_dir, f"labeled_{filename}")
             cv2.imwrite(output_path, image)
-                    # 이미지 처리 카운터 증가
+
+            # 이미지 처리 카운터 증가
             image_count += 1
             
             # 10개의 이미지 처리 후 루프 종료
             if image_count >= max_images:
                 break
-
