@@ -7,3 +7,4 @@ id_rsa.pub
 .ssh/
 *.pt
 *.onnx
+*.pth
