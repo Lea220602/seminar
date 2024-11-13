@@ -9,11 +9,11 @@ import os
 
 # 이전에 정의한 CustomImageDataset과 모델을 import
 from Dataloader.dataloader import CustomImageDataset
-from Seminar.Model.nn_models import ImprovedPupilLandmarkNet_64
+from Model.nn_models import ImprovedPupilLandmarkNet_64, ImprovedPupilLandmarkNet_64_driver
 
 # 테스트 데이터 경로 설정
-test_img_dir = '/Users/hong-eun-yeong/Codes/test_dataset'
-output_dir = '/Users/hong-eun-yeong/Codes/test_results'
+test_img_dir = '/workspace/data/project1_rev_test_lea'
+output_dir = '/workspace/data/result/project1_rev_test_lea'
 
 # 출력 디렉토리 생성
 os.makedirs(output_dir, exist_ok=True)
@@ -24,6 +24,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # DataLoader 설정
 transform = transforms.Compose([
+    transforms.Resize((64, 64)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485], std=[0.229])
 ])
@@ -31,9 +32,13 @@ transform = transforms.Compose([
 test_dataset = CustomImageDataset(img_dir=test_img_dir, transform=transform, is_train=False)
 test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-# 모델 로드
-model = ImprovedPupilLandmarkNet_64().to(device)
-checkpoint = torch.load('best_landmark_detection_model.pt', map_location=device)
+# 기본 모델 로드
+base_model = ImprovedPupilLandmarkNet_64()
+# 운전자 모델 초기화
+model = ImprovedPupilLandmarkNet_64_driver(pretrained_model=base_model).to(device)
+
+# 체크포인트 로드
+checkpoint = torch.load('/workspace/data_code/Eye_data/Model/seminar/checkpoints/best_driver_model_loss_0.004268_20241106_002433.pt', map_location=device)
 model.load_state_dict(checkpoint['model_state_dict'])
 model.eval()
 
@@ -62,8 +67,8 @@ def test_and_visualize(model, dataloader, device):
             
             # 이미지에 실제 랜드마크와 예측된 랜드마크 표시
             h, w = image.shape[:2]
-            cv2.circle(image, (int(label[0]*w), int(label[1]*h)), 1, (0, 255, 0), -1)  # 실제 랜드마크 (녹색)
-            cv2.circle(image, (int(pred[0]*w), int(pred[1]*h)), 1, (255, 0, 0), -1)   # 예측된 랜드마크 (빨간색)
+            cv2.circle(image, (int(label[0]*w), int(label[1]*h)), 3, (0, 255, 0), -1)  # 실제 랜드마크 (녹색)
+            cv2.circle(image, (int(pred[0]*w), int(pred[1]*h)), 3, (255, 0, 0), -1)   # 예측된 랜드마크 (빨간색)
             
             # 결과 저장
             plt.figure(figsize=(8, 8))

@@ -37,6 +37,6 @@ def create_test_dataset(source_dir, test_dir, test_ratio=0.2):
     print(f"Moved {len(test_images)} images and their labels to {test_dir}")
 
 # 사용 예
-source_directory = '/Users/hong-eun-yeong/Codes/combined_dataset'
-test_directory = '/Users/hong-eun-yeong/Codes/test_dataset'
+source_directory = '/workspace/data/v4.2.2_pupil/total_data'
+test_directory = '/workspace/data/v4.2.2_pupil/test_data'
 create_test_dataset(source_directory, test_directory, test_ratio=0.2)

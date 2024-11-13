@@ -47,12 +47,12 @@ def random_crop_around_label(image, right_x, right_y, left_x, left_y, crop_size=
     return right_cropped_image, left_cropped_image, (normalized_right_x, normalized_right_y, normalized_left_x, normalized_left_y), (new_right_x, new_right_y, new_left_x, new_left_y), (right_left, right_top, left_left, left_top)
 
 # 디렉토리 경로 설정
-base_dir = '/Users/hong-eun-yeong/Codes/train'
+base_dir = '/workspace/data/v4.2.2/train'
 png_dir = 'eyes_png'
-txt_dir = 'total_txt'
-blind_dir = 'blind_png'
+txt_dir = 'total_txt'# 동공 좌표가 있는 텍스트 파일
+blind_dir = 'blind_png' # 원본 눈 이미지
 # 새로운 폴더 경로 설정
-output_base_dir = '/Users/hong-eun-yeong/Codes/1_crop_output'
+output_base_dir = '/workspace/data/v4.2.2_pupil'
 right_output_dir = os.path.join(output_base_dir, 'Right')
 left_output_dir = os.path.join(output_base_dir, 'Left')
 right_label_dir = os.path.join(output_base_dir, 'right_label')

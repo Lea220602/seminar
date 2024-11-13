@@ -1,0 +1,9 @@
+mode: base
+train_dir: /workspace/data/project1_rev_train_lea/
+val_dir: /workspace/data/project1_rev_test_lea/
+save_dir: ./checkpoints/base/
+pretrained_path: None
+batch_size: 64
+learning_rate: 0.0001
+epochs: 100
+device: cuda:2
